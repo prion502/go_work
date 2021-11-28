@@ -55,43 +55,109 @@ func AdminRouter(r *gin.Engine)  {
 	{
 		//查看文章
 		adminRouter.GET("/article", func(context *gin.Context) {
-			username,_:=context.Cookie("文章")
+			username, _ := context.Cookie("文章")
 			var article string
-			sql := "select article from articleContext where username=?"
-			rows,err:=conf.DB.Query(sql,username)
-			if err!=nil {
-				context.JSON(http.StatusOK,gin.H{
-					"message":"未查询到该用户的文章",
+			sql := "select article from articlecontext where username=?"
+			rows, err := conf.DB.Query(sql, username)
+			if err != nil {
+				context.JSON(http.StatusOK, gin.H{
+					"message": "未查询到该用户的文章",
 				})
 			}
 			defer rows.Close()
-			for rows.Next(){
-				err1:=rows.Scan(&article)
-				if err1!=nil{
-					context.JSON(http.StatusOK,gin.H{
-						"message":"文章读取过程中出错",
+			for rows.Next() {
+				err1 := rows.Scan(&article)
+				if err1 != nil {
+					context.JSON(http.StatusOK, gin.H{
+						"message": "文章读取过程中出错",
 					})
 				}
-				context.JSON(http.StatusOK,gin.H{
-					"文章":article,
+				context.JSON(http.StatusOK, gin.H{
+					"文章": article,
+					"用户":username,
+					"message":"文章读取成功",
 				})
 			}
 
 		})
-		//修改文章
+		//发表文章
 		adminRouter.POST("/article", func(context *gin.Context) {
-
-		})
-		//删除文章
-		adminRouter.DELETE("/article", func(context *gin.Context) {
-
+			username, err := context.Cookie("username")
+			if err != nil {
+				context.JSON(http.StatusForbidden, gin.H{
+					"message": "请先登录！",
+				})
+				return
+			}
+			title := context.Query("title")
+			content := context.Query("content")
+			if content == "" || title == "" {
+				context.JSON(http.StatusForbidden, gin.H{
+					"message": "发表失败",
+					"reason":  "文章为空",
+				})
+				return
+			}
+			sqlStr := "insert into article(username, title, articlecontent) values (?,?,?)"
+			_, err = conf.DB.Exec(sqlStr, username, title, content)
+			if err != nil {
+				context.JSON(http.StatusBadRequest, gin.H{
+					"message": "发表失败！",
+					"err":     err,
+				})
+				return
+			}
+			context.JSON(http.StatusOK, gin.H{
+				"status":   http.StatusOK,
+				"message":  "发表成功！",
+				"username": username,
+				"title":    title,
+				"content":  content,
+			})
 		})
 	}
-	{   //点赞
-		adminRouter.GET("/praise", func(context *gin.Context) {
-		})
-		//取消点赞
-		adminRouter.POST("/praise", func(context *gin.Context) {
+
+	{ //点赞
+		adminRouter.POST("/clickPraise", func(context *gin.Context) {
+			UseName, err := context.Cookie("username")
+			if err != nil {
+				context.JSON(http.StatusForbidden, gin.H{
+					"message": "请先登录！",
+				})
+				return
+			}
+			username := context.Query("username")
+			title := context.Query("title")
+			sqlStr := "update article set Prasie=Prasie+1 where username=? and title = ?"
+			ret, err1 := conf.DB.Exec(sqlStr, username, title)
+			if err1 != nil {
+				context.JSON(http.StatusInternalServerError, gin.H{
+					"status":  http.StatusInternalServerError,
+					"message": "点赞失败！",
+					"err":     err,
+				})
+				return
+			}
+			n, err2 := ret.RowsAffected()
+			if err2 != nil {
+				context.JSON(http.StatusOK, gin.H{
+					"status":  http.StatusOK,
+					"message": "点赞失败！",
+				})
+				return
+			}
+			if n == 0 {
+				context.JSON(http.StatusForbidden, gin.H{
+					"status":  http.StatusForbidden,
+					"message": "点赞失败！",
+					"reason":  "文章不存在!",
+				})
+				return
+			}
+			context.JSON(http.StatusOK, gin.H{
+				"message": "点赞成功！"+UseName,
+				"title":   title,
+			})
 		})
 	}
 }

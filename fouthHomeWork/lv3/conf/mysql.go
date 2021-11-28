@@ -1,6 +1,10 @@
 package conf
 
-import "database/sql"
+import (
+	"database/sql"
+	_"github.com/go-sql-driver/mysql"
+)
+
 var DB *sql.DB
 var err error
 func init()  {
