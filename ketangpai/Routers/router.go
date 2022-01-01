@@ -1,0 +1,52 @@
+package Routers
+
+import (
+	"github.com/gin-gonic/gin"
+	"ketangpai/Controller"
+	"ketangpai/Middle"
+)
+func RouterInit(r *gin.Engine){
+	Pubilc:=r.Group("/",Middle.AccessMiddle())
+	{
+		Pubilc.POST("/register",Controller.Register)
+		Pubilc.DELETE("/register",Controller.DeleteUser)
+		Pubilc.POST("/login",Controller.Login)
+		Pubilc.DELETE("/login",Controller.CancelLogin)
+	}
+	Teacher:=r.Group("/teacher",Middle.LoginMiddle(),Middle.AccessMiddle())
+	{
+		Teacher.GET("/",Controller.TeacherMain)
+		Teacher.POST("/sign",Controller.CreateSignIn)
+		Teacher.GET("/sign",Controller.CheckSignIn)
+		Teacher.POST("/title",Controller.CreateTitle)
+		Teacher.GET("/title",Controller.LookDiscussion)
+		Teacher.POST("/class",Controller.CreateClass)
+		Teacher.GET("/class",Controller.CheckClass)
+		Teacher.DELETE("/class",Controller.DeleteClass)
+		Teacher.POST("/useclass",Controller.UseClass)
+		Teacher.POST("/nouseclass",Controller.NoUseClass)
+		Teacher.POST("/updateclass",Controller.UpdateClassCode)
+		Teacher.POST("/signhomework",Controller.AssignHomework)
+		Teacher.POST("/signppt",Controller.UploadPpt)
+		Teacher.POST("/question",Controller.CreateQuestion)
+		Teacher.POST("/grade",Controller.ADDGrade)
+		Teacher.GET("/grade",Controller.CheckGrade)
+		Teacher.DELETE("/grade",Controller.DeleteGrade)
+		Teacher.POST("/discussion",Controller.CreateTitle)
+		Teacher.GET("/discussion",Controller.CheckDiscussion)
+	}
+	student:=r.Group("/student",Middle.LoginMiddle(),Middle.AccessMiddle())
+	{
+		student.GET("/",Controller.StudentMain)
+		student.POST("/class",Controller.JoinClass)
+		student.DELETE("/class",Controller.ExitClass)
+		student.POST("/discussion",Controller.AttendDiscussion)
+		student.GET("/discussion",Controller.LookDiscussion)
+		student.POST("/signin",Controller.SignIn)
+		student.POST("/downloadppt",Controller.DownLoadPPT)
+		student.POST("/downloadhomework",Controller.DownloadHomework)
+		student.POST("/takeinhomeword",Controller.TakeInHomework)
+		student.POST("/question",Controller.AnswerQuestion)
+		student.GET("/grade",Controller.LookGrade)
+	}
+}
